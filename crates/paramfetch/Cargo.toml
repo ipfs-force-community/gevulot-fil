@@ -1,0 +1,22 @@
+[package]
+name = "paramfetch"
+version = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+anyhow = { workspace = true }
+flate2 = { version = "1.0.9", features = ["rust_backend"] }
+indicatif = "0.17.8"
+dialoguer = "0.11.0"
+tar = "0.4.26"
+env_proxy = "0.4"
+reqwest = { workspace = true }
+lazy_static = "1.4.0"
+pbr = "1.0"
+clap = { version = "4.2", features = ["derive", "env"] }
+serde_json = "1.0.116"
+bytesize = "1.1"
+
+storage-proofs-core = { version = "16.1.0", default-features = false }
+filecoin-proofs = { version = "16.1.0", default-features = false }

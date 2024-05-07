@@ -1,0 +1,13 @@
+[package]
+name = "gevulot-fil-prover"
+version = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+anyhow = { workspace = true }
+
+filecoin-proofs-api = { workspace = true }
+gevulot-common = { workspace = true }
+gevulot-shim = { workspace = true }
+gevulot-fil = { path = "../gevulot-fil" }

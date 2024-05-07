@@ -1,0 +1,32 @@
+[workspace.package]
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+edition = "2021"
+
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.dependencies]
+thiserror = "1"
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+zeroize = "1.7.0"
+mimalloc = "0.1.39"
+reqwest = { version = "0.12.4", default-features = false, features = [
+    "json",
+    "rustls-tls",
+    "rustls-tls-native-roots",
+    "blocking",
+] }
+blake3 = "1.5.1"
+gevulot-node = { git = "https://github.com/gevulotnetwork/gevulot.git", rev = "7579a2d", default-features = false }
+gevulot-common = { git = "https://github.com/gevulotnetwork/gevulot.git", rev = "7579a2d" }
+gevulot-shim = { git = "https://github.com/gevulotnetwork/gevulot.git", rev = "7579a2d" }
+filecoin-proofs-api = { version = "16.1.0", default-features = false, features = [
+    "cuda-supraseal",
+] }
+
+[patch.crates-io]
+# supraseal-c2 = { git = "https://github.com/ipfs-force-community/supra_seal.git", rev = "4147e23" }
+supraseal-c2 = { path = "/root/code/github.com/ipfs-force-community/supra_seal/c2" }
