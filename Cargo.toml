@@ -20,13 +20,19 @@ reqwest = { version = "0.12.4", default-features = false, features = [
     "blocking",
 ] }
 blake3 = "1.5.1"
+rayon = "1.10.0"
+tracing = "0.1"
+rand = "0.8"
 gevulot-node = { git = "https://github.com/gevulotnetwork/gevulot.git", rev = "7579a2d", default-features = false }
 gevulot-common = { git = "https://github.com/gevulotnetwork/gevulot.git", rev = "7579a2d" }
 gevulot-shim = { git = "https://github.com/gevulotnetwork/gevulot.git", rev = "7579a2d" }
 filecoin-proofs-api = { version = "16.1.0", default-features = false, features = [
     "cuda-supraseal",
 ] }
+storage-proofs-core = { version = "16.1.0", default-features = false}
+storage-proofs-post = { version = "16.1.0", default-features = false }
+filecoin-hashers = { version = "~11.1.0", default-features = false, features = ["poseidon", "sha256"] }
+filecoin-proofs = { version = "16.1.0", default-features = false }
 
 [patch.crates-io]
-# supraseal-c2 = { git = "https://github.com/ipfs-force-community/supra_seal.git", rev = "4147e23" }
-supraseal-c2 = { path = "/root/code/github.com/ipfs-force-community/supra_seal/c2" }
+supraseal-c2 = { git = "https://github.com/ipfs-force-community/supra_seal.git", rev = "4147e23" }

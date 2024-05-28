@@ -5,7 +5,7 @@ license = { workspace = true }
 edition = { workspace = true }
 
 [dependencies]
-tracing = "0.1"
+tracing = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 anyhow = { workspace = true }
 serde = { workspace = true }
@@ -31,10 +31,7 @@ filecoin-proofs-api = { workspace = true }
 gevulot-common = { workspace = true }
 gevulot-node = { workspace = true }
 gevulot-fil = { path = "../gevulot-fil" }
-# vc-processors = { git = "https://github.com/ipfs-force-community/damocles.git", rev = "04197ca", default-features = false, features = [
-#     "numa",
-# ] }
-vc-processors = { path = "/root/damocles_flox/damocles-worker/vc-processors", default-features = false, features = [
+vc-processors = { git = "https://github.com/ipfs-force-community/damocles.git", rev = "911d319", default-features = false, features = [
     "numa",
 ] }
 

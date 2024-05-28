@@ -1,0 +1,20 @@
+[package]
+name = "windowpost-api"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+rayon = { workspace = true }
+tracing = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+storage-proofs-core = { workspace = true, default-features = false}
+storage-proofs-post = { workspace = true, default-features = false }
+filecoin-hashers = { workspace = true, default-features = false }
+filecoin-proofs = { workspace = true, default-features = false }
+filecoin-proofs-api = { workspace = true }
+bellperson = "0.26.0"
+blstrs = "0.7.0"
+typeid = "1.0.0"
