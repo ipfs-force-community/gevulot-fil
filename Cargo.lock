@@ -3589,7 +3589,7 @@ dependencies = [
  "regex",
  "syn 1.0.109",
  "tempfile",
- "which 4.4.2",
+ "which",
 ]
 
 [[package]]
@@ -4498,7 +4498,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb266b15daead53670d477d7e136b8fc92d46e31bb9007ac46d304df23689a4b"
 dependencies = [
  "cc",
- "which 4.4.2",
+ "which",
 ]
 
 [[package]]
@@ -4880,12 +4880,12 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 [[package]]
 name = "supraseal-c2"
 version = "0.1.0"
+source = "git+https://github.com/ipfs-force-community/supra_seal.git?rev=4147e23#4147e23c819fd7aa0f496814f6319e8a672326a5"
 dependencies = [
  "blst",
  "cc",
  "cmd_lib",
  "sppark",
- "which 6.0.1",
 ]
 
 [[package]]
@@ -5434,6 +5434,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "typeid"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "059d83cc991e7a42fc37bd50941885db0888e34209f8cfd9aab07ddec03bc9cf"
+
+[[package]]
 name = "typenum"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5564,6 +5570,7 @@ checksum = "830b7e5d4d90034032940e4ace0d9a9a057e7a45cd94e6c007832e39edb82f6d"
 [[package]]
 name = "vc-processors"
 version = "0.2.1"
+source = "git+https://github.com/ipfs-force-community/damocles.git?rev=911d319#911d319101080988f1580939fa5657fb4e64411a"
 dependencies = [
  "anyhow",
  "cgroups-rs",
@@ -5789,18 +5796,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "which"
-version = "6.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8211e4f58a2b2805adfbefbc07bab82958fc91e3836339b1ab7ae32465dce0d7"
-dependencies = [
- "either",
- "home",
- "rustix",
- "winsafe",
-]
-
-[[package]]
 name = "whoami"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5840,6 +5835,25 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "windowpost-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bellperson",
+ "blstrs",
+ "filecoin-hashers",
+ "filecoin-proofs",
+ "filecoin-proofs-api",
+ "rand",
+ "rayon",
+ "serde",
+ "storage-proofs-core",
+ "storage-proofs-post",
+ "tracing",
+ "typeid",
+]
 
 [[package]]
 name = "windows"
@@ -6026,12 +6040,6 @@ dependencies = [
  "cfg-if",
  "windows-sys 0.48.0",
 ]
-
-[[package]]
-name = "winsafe"
-version = "0.0.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "wyz"
