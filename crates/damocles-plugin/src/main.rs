@@ -15,10 +15,12 @@ use filestorage::FileStorage;
 use gevulot_fil::codec::decode_from;
 use gevulot_fil::C2Input;
 use gevulot_fil::SecretKey;
+use gevulot_fil::WindowPoStPhase2Input;
 use gevulot_node::rpc_client::RpcClient;
 use gevulot_node::types::Hash;
 use panic_hook::install_panic_hook;
-use processor::C2Processor;
+use processor::c2::C2Processor;
+use processor::windowpost::WindowPoStProcessor;
 use processor::Gevulot as BaseProcessor;
 use tokio::runtime::Builder;
 use tracing::info;
@@ -90,7 +92,12 @@ enum ProcessorCommands {
         verifier_program: Hash,
     },
     #[command(name = "window_post", about = "gevulot windowPoST processor")]
-    WindowPoST,
+    WindowPoST {
+        #[arg(long, env, value_parser=parse_hash)]
+        prover_program: Hash,
+        #[arg(long, env, value_parser=parse_hash)]
+        verifier_program: Hash,
+    },
 }
 
 #[derive(Subcommand)]
@@ -108,7 +115,14 @@ enum ExecCommands {
         name = "window_post",
         about = "manually execute windowPoST on gevulot network"
     )]
-    WindowPoST,
+    WindowPoST {
+        #[arg(long, env, value_parser=parse_hash)]
+        prover_program: Hash,
+        #[arg(long, env, value_parser=parse_hash)]
+        verifier_program: Hash,
+        #[arg(long, env)]
+        input_file: PathBuf,
+    },
 }
 
 pub fn main() -> Result<()> {
@@ -135,8 +149,16 @@ pub fn main() -> Result<()> {
             );
             run_consumer_with_proc(proc)
         }
-        Commands::Processor(ProcessorCommands::WindowPoST) => {
-            unimplemented!()
+        Commands::Processor(ProcessorCommands::WindowPoST {
+            prover_program,
+            verifier_program,
+        }) => {
+            let proc = WindowPoStProcessor::new(
+                create_base_processor(&cli)?,
+                prover_program,
+                verifier_program,
+            );
+            run_consumer_with_proc(proc)
         }
         Commands::Fileserver { listen } => {
             let routes = warp::path("static")
@@ -183,8 +205,22 @@ pub fn main() -> Result<()> {
             Ok(())
         }
 
-        Commands::Exec(ExecCommands::WindowPoST) => {
-            unimplemented!()
+        Commands::Exec(ExecCommands::WindowPoST {
+            prover_program,
+            verifier_program,
+            ref input_file,
+        }) => {
+            let proc: WindowPoStProcessor = WindowPoStProcessor::new(
+                create_base_processor(&cli)?,
+                prover_program,
+                verifier_program,
+            );
+            let f = File::open(&input_file).context("open the c2 input file")?;
+            let wdp2_in: WindowPoStPhase2Input =
+                decode_from(f).context("decode the c2 input data")?;
+            let proofs = proc.exec_wdp2(wdp2_in)?;
+            println!("{}", hex::encode(&proofs[0].1));
+            Ok(())
         }
     }
 }

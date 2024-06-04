@@ -34,6 +34,8 @@ gevulot-fil = { path = "../gevulot-fil" }
 vc-processors = { git = "https://github.com/ipfs-force-community/damocles.git", rev = "911d319", default-features = false, features = [
     "numa",
 ] }
+windowpost-api = { path = "../windowpost-api" }
+forest_address = { version = "0.3" }
 
 [build-dependencies]
 vergen = { version = "8.3.0", features = ["build", "git", "git2"] }

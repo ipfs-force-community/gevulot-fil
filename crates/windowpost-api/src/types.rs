@@ -14,3 +14,19 @@ pub struct PrivateReplicaInfo {
     /// Contains the replica.
     pub(crate) replica_path: PathBuf,
 }
+
+impl PrivateReplicaInfo {
+    pub fn new(
+        registered_proof: RegisteredPoStProof,
+        comm_r: Commitment,
+        cache_dir: PathBuf,
+        replica_path: PathBuf,
+    ) -> Self {
+        PrivateReplicaInfo {
+            registered_proof,
+            comm_r,
+            cache_dir,
+            replica_path,
+        }
+    }
+}

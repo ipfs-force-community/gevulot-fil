@@ -19,6 +19,7 @@ fn main() -> Result<()> {
 }
 
 fn run_task(task: Task) -> Result<TaskResult> {
+    println!("task: {:?}", task);
     let [_, input_filename] = task
         .args
         .array_chunks::<2>()
@@ -36,6 +37,12 @@ fn run_task(task: Task) -> Result<TaskResult> {
         .find(|(filename, _)| filename == input_filename)
         .with_context(|| format!("filename {} not found", input_filename))?;
 
+    println!("----- {:?}", input_path.display());
+    for res in std::fs::read_dir(input_path.parent().unwrap()).unwrap() {
+        let e = res.unwrap();
+        println!("{}", e.path().display()) 
+    }
+    
     let f = File::open(input_path).context("open the c2 input file")?;
     let c2_in: C2Input = decode_from(f).context("decode the c2 input data")?;
 

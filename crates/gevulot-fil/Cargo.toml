@@ -16,3 +16,4 @@ bincode = "1.3.3"
 zstd = "0.13.1"
 libsecp256k1 = "0.7"
 blake3 = { workspace = true }
+windowpost-api = { path = "../windowpost-api" }
