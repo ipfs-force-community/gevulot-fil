@@ -5,12 +5,17 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use filecoin_proofs_api::seal::SealCommitPhase1Output;
+use filecoin_proofs_api::ChallengeSeed;
 use filecoin_proofs_api::ProverId;
+use filecoin_proofs_api::RegisteredPoStProof;
 use filecoin_proofs_api::SectorId;
 use gevulot_common::WORKSPACE_PATH;
 use gevulot_node::types::Hash;
 use serde::Deserialize;
 use serde::Serialize;
+use windowpost_api::DefaultTreeDomain;
+use windowpost_api::PublicSector;
+use windowpost_api::VanillaPoStProofs;
 use zeroize::Zeroize;
 use zeroize::ZeroizeOnDrop;
 
@@ -70,6 +75,18 @@ pub enum C2Input {
         c1out: SealCommitPhase1Output,
         prover_id: ProverId,
         sector_id: SectorId,
+    },
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum WindowPoStPhase2Input {
+    // V0 of the WindowPoStPhase2 input
+    V0 {
+        proof_type: RegisteredPoStProof,
+        randomness: ChallengeSeed,
+        prover_id: ProverId,
+        pub_sectors: Vec<PublicSector<DefaultTreeDomain>>,
+        vanilla_proofs: VanillaPoStProofs,
     },
 }
 

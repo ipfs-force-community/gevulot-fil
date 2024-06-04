@@ -9,7 +9,7 @@ use filecoin_proofs::types::PrivateReplicaInfo;
 use filecoin_proofs::types::ProverId;
 use filecoin_proofs::types::SnarkProof;
 use filecoin_proofs::with_shape;
-use filecoin_proofs::DefaultTreeDomain;
+pub use filecoin_proofs::DefaultTreeDomain;
 use filecoin_proofs::PoStType;
 use filecoin_proofs::SectorShape2KiB;
 use filecoin_proofs::SectorShape32GiB;
@@ -22,11 +22,11 @@ use serde::Deserialize;
 use serde::Serialize;
 use storage_proofs_core::merkle::MerkleTreeTrait;
 use storage_proofs_core::sector::SectorId;
-use storage_proofs_post::fallback::PublicSector;
+pub use storage_proofs_post::fallback::PublicSector;
 
 mod caches;
 mod proof;
-mod types;
+pub mod types;
 mod util;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -126,7 +126,6 @@ impl VanillaPoStProofs {
 ///
 /// Returns [`SnarkProof`] for challenge.
 pub fn generate_window_post_vanilla_proofs(
-    proof_type: RegisteredPoStProof,
     randomness: &ChallengeSeed,
     replicas: &BTreeMap<SectorId, crate::types::PrivateReplicaInfo>,
     prover_id: ProverId,
@@ -145,7 +144,7 @@ pub fn generate_window_post_vanilla_proofs(
     with_shape!(
         u64::from(registered_post_proof_type_v1.sector_size()),
         generate_window_post_vanilla_proofs_inner,
-        proof_type,
+        registered_post_proof_type_v1,
         randomness,
         replicas,
         prover_id,
@@ -205,7 +204,7 @@ pub fn generate_window_post_snark_proof<Tree: 'static + MerkleTreeTrait>(
     prover_id: ProverId,
     pub_sectors: Vec<PublicSector<DefaultTreeDomain>>,
     vanilla_proofs: VanillaPoStProofs,
-) -> Result<SnarkProof> {
+) -> Result<Vec<(RegisteredPoStProof, SnarkProof)>> {
     with_shape!(
         u64::from(proof_type.sector_size()),
         generate_window_post_snark_proof_inner,
@@ -223,7 +222,7 @@ fn generate_window_post_snark_proof_inner<Tree: 'static + MerkleTreeTrait>(
     prover_id: ProverId,
     mut pub_sectors: Vec<PublicSector<DefaultTreeDomain>>,
     vanilla_proofs: VanillaPoStProofs,
-) -> Result<SnarkProof> {
+) -> Result<Vec<(RegisteredPoStProof, SnarkProof)>> {
     let post_config = proof_type.as_v1_config();
 
     let pub_sectors: Vec<PublicSector<<<Tree as MerkleTreeTrait>::Hasher as Hasher>::Domain>> = unsafe {
@@ -234,11 +233,27 @@ fn generate_window_post_snark_proof_inner<Tree: 'static + MerkleTreeTrait>(
         )
     };
     let raw_vanilla_proofs = vanilla_proofs.try_into_raw::<Tree>()?;
-    proof::generate_window_post_snark_proof::<Tree>(
+    let posts_v1 = proof::generate_window_post_snark_proof::<Tree>(
         &post_config,
         randomness,
         prover_id,
         pub_sectors,
         raw_vanilla_proofs,
-    )
+    )?;
+
+    // once there are multiple versions, merge them before returning
+
+    Ok(vec![(proof_type, posts_v1)])
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_vanilla_post_proofs() {
+        let vanilla = VanillaPoStProofs::try_from_raw::<SectorShape32GiB>(vec![]).unwrap();
+        assert!(vanilla.try_into_raw::<SectorShape64GiB>().is_err());
+    }
 }
