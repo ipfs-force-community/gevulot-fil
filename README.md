@@ -16,16 +16,15 @@ export IPFS_GATEWAY=https://proof-parameters.s3.cn-south-1.jdcloud-oss.com/ipfs/
 
 
 ### Build Prover image
-TODO
-
+```
+cargo build --bin c2-prover
+```
 ### Deploy prover
 ```
 gevulot-cli deploy --name gevulot-fil-c2 --prover ~/.ops/images/c2-prover --verifier ~/.ops/images/c2-verifier
 ```
-TODO
 
 ## [Damocles](https://github.com/ipfs-force-community/damocles) integration
-TODO
 ```
 cargo run --release --bin gevulot-fil-damocles-plugin
 ```

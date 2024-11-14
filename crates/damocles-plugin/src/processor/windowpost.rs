@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
+use std::time::Duration;
 
-use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use base64::Engine;
@@ -16,21 +16,19 @@ use forest_address::Address;
 use gevulot_fil::calc_checksum;
 use gevulot_fil::codec::encode;
 use gevulot_fil::WindowPoStPhase2Input;
-use gevulot_node::types::rpc::TxRpcPayload;
-use gevulot_node::types::transaction::Payload;
 use gevulot_node::types::transaction::ProgramData;
-use gevulot_node::types::transaction::Workflow;
 use gevulot_node::types::transaction::WorkflowStep;
 use gevulot_node::types::Hash;
-use gevulot_node::types::Transaction;
 use serde::Deserialize;
 use serde::Serialize;
+use tokio::time;
 use vc_processors::core::Processor;
 use vc_processors::core::Task as VTask;
 use windowpost_api::types::PrivateReplicaInfo;
 
 use super::c2::ActorID;
-use super::Gevulot;
+use crate::filestorage::FileStorage;
+use crate::gevulot::GevulotExecutor;
 use crate::util::block_on;
 
 pub const STAGE_NAME_WINDOW_POST: &str = "windowpost";
@@ -64,18 +62,25 @@ impl VTask for WindowPoSt {
 }
 
 #[derive(Clone)]
-pub struct WindowPoStProcessor {
-    gevulot: Gevulot,
+pub struct WindowPoStProcessor<G> {
+    gevulot_executor: G,
     prover_program: Hash,
     verifier_program: Hash,
+    fs: FileStorage,
 }
 
-impl WindowPoStProcessor {
-    pub fn new(gevulot: Gevulot, prover_program: Hash, verifier_program: Hash) -> Self {
+impl<G: GevulotExecutor> WindowPoStProcessor<G> {
+    pub fn new(
+        gevulot_executor: G,
+        prover_program: Hash,
+        verifier_program: Hash,
+        fs: FileStorage,
+    ) -> Self {
         Self {
-            gevulot,
+            gevulot_executor,
             prover_program,
             verifier_program,
+            fs,
         }
     }
 
@@ -87,8 +92,7 @@ impl WindowPoStProcessor {
             encode(&wdp2_in).context("encode the window post phase2 input data")?;
         let checksum = calc_checksum(&wd_phase2_in_bytes).to_string();
 
-        self.gevulot
-            .fs
+        self.fs
             .write(&checksum, wd_phase2_in_bytes)
             .context("write window post phase2 input data to filestorage")?;
 
@@ -103,7 +107,7 @@ impl WindowPoStProcessor {
                 ],
                 inputs: vec![ProgramData::Input {
                     file_name: checksum.clone(),
-                    file_url: self.gevulot.fs.file_url(&checksum),
+                    file_url: self.fs.file_url(&checksum),
                     checksum: checksum.clone(),
                 }],
             },
@@ -122,56 +126,31 @@ impl WindowPoStProcessor {
             },
         ];
 
-        let tx = Transaction::new(
-            Payload::Run {
-                workflow: Workflow { steps },
-            },
-            self.gevulot.key.inner(),
-        );
-
         block_on(async {
-            let tx_hash = self
-                .gevulot
-                .send_transaction(&tx)
+            let hash = self
+                .gevulot_executor
+                .run_program(steps)
                 .await
-                .context("send transaction")?;
+                .context("run program")?;
+            let mut interval = time::interval(Duration::from_secs(5));
+            time::timeout(Duration::from_mins(60), async {
+                loop {
+                    interval.tick().await;
 
-            let transaction = self.gevulot.client.get_transaction(&tx_hash).await.unwrap();
-            println!("{:?}", transaction);
-
-            if let TxRpcPayload::Verification { verification, .. } = transaction.payload {
-
-                // return Ok(base64::engine::general_purpose::STANDARD.decode(verification)?);
-            }
-            Err(anyhow!("invalid payload"))
-            // let mut interval = time::interval(Duration::from_secs(2));
-            // time::timeout(Duration::from_mins(60), async {
-            //     loop {
-            //         interval.tick().await;
-            //         match self.client.get_transaction(&tx_hash).await {
-            //             Ok(transaction) => match transaction.payload {
-            //                 TxRpcPayload::Verification { verification, .. } => {
-            //                     let proof = base64::engine::general_purpose::STANDARD
-            //                         .decode(verification)?;
-            //                     return Ok(proof);
-            //                 }
-            //                 _ => {
-            //                     todo!()
-            //                 }
-            //             },
-            //             Err(err) => {
-            //                 warn!(error=?err, "failed to get transaction: {}", tx_hash);
-            //             }
-            //         }
-            //     }
-            // })
-            // .await
-            // .context("timed out")
+                    if let Some(proof_string) = self.gevulot_executor.query_proof(&hash).await? {
+                        let _proof =
+                            base64::engine::general_purpose::STANDARD.decode(proof_string)?;
+                        return Ok(vec![]);
+                    }
+                }
+            })
+            .await
+            .context("timed out")?
         })
     }
 }
 
-impl Processor<WindowPoSt> for WindowPoStProcessor {
+impl<G: GevulotExecutor + Send + Sync> Processor<WindowPoSt> for WindowPoStProcessor<G> {
     fn name(&self) -> String {
         "gevulot WindowPoSt".to_string()
     }

@@ -1,0 +1,12 @@
+{
+    "KlibDir": "klibs",
+    "Klibs": [
+        "gpu_nvidia"
+    ],
+    "Dirs": [
+        "nvidia"
+    ],
+    "RunConfig": {
+        "GPUs": 1
+    }
+}

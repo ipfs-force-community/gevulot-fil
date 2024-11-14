@@ -1,5 +1,7 @@
 use std::fs;
 use std::fs::File;
+use std::io;
+use std::path::Path;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -12,7 +14,7 @@ use gevulot_shim::Task;
 use gevulot_shim::TaskResult;
 
 fn main() -> Result<()> {
-    let f = File::open("/dataset/c2-input-32GiB.bincode.zst").context("open the c2 input file")?;
+    let f = File::open("/dataset/c2-input-8MiB.bincode.zst").context("open the c2 input file")?;
     let c2_in: C2Input = decode_from(f).context("decode the c2 input data")?;
     let mut proof_output = "./out".to_string();
     match c2_in {

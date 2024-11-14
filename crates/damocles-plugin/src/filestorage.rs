@@ -31,6 +31,10 @@ impl FileStorage {
         u.path_segments_mut().unwrap().push(filename);
         u.as_str().to_string()
     }
+
+    pub fn read_file(&self, filename: &str) -> anyhow::Result<Vec<u8>> {
+        Ok(self.fs.read(filename)?.to_vec())
+    }
 }
 
 impl std::ops::Deref for FileStorage {
