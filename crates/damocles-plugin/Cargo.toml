@@ -26,6 +26,8 @@ reqwest = { workspace = true }
 url = "2.5.0"
 hex = "0.4.3"
 clap = { version = "4.2", features = ["derive", "env"] }
+async-trait = "0.1.83"
+rand = "0.8.5"
 
 filecoin-proofs-api = { workspace = true }
 gevulot-common = { workspace = true }

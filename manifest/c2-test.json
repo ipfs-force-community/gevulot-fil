@@ -1,18 +1,18 @@
 {
-  "RebootOnExit": true,
   "Env": {
     "RUST_BACKTRACE": "1",
     "RUST_LOG": "debug",
     "FIL_PROOFS_PARAMETER_CACHE": "/filecoin-proof-parameters"
   },
-  "Program": "c2-test",
+  "Program": "target/release/c2-test",
   "Files": [
-    "filecoin-proof-parameters/v28-stacked-proof-of-replication-merkletree-poseidon_hasher-8-8-0-sha256_hasher-82a357d2f2ca81dc61bb45f4a762807aedee1b0a53fd6c4e77b46a01bfef7820.params",
-    "filecoin-proof-parameters/v28-stacked-proof-of-replication-merkletree-poseidon_hasher-8-8-0-sha256_hasher-82a357d2f2ca81dc61bb45f4a762807aedee1b0a53fd6c4e77b46a01bfef7820.vk"
+    "dataset/c2-input-8MiB.bincode.zst",
+    "filecoin-proof-parameters/v28-stacked-proof-of-replication-merkletree-poseidon_hasher-8-0-0-sha256_hasher-ecd683648512ab1765faa2a5f14bab48f676e633467f0aa8aad4b55dcb0652bb.params",
+    "filecoin-proof-parameters/v28-stacked-proof-of-replication-merkletree-poseidon_hasher-8-0-0-sha256_hasher-ecd683648512ab1765faa2a5f14bab48f676e633467f0aa8aad4b55dcb0652bb.vk"
   ],
   "KlibDir": "klibs",
   "Klibs": ["gpu_nvidia"],
-  "Dirs": ["nvidia", "dataset"],
+  "Dirs": ["lib", "lib64", "nvidia"],
   "RunConfig": {
     "CPUs": 32,
     "Memory": "64g",

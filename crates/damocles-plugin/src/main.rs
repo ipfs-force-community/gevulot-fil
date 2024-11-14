@@ -1,4 +1,4 @@
-#![feature(lazy_cell)]
+#![feature(lazy_cell, duration_constructors)]
 
 use std::fmt;
 use std::fs;
@@ -12,6 +12,9 @@ use anyhow::Result;
 use clap::Parser;
 use clap::Subcommand;
 use filestorage::FileStorage;
+use gevulot::local::GevulotLocalExecutor;
+use gevulot::rpc::GevulotRpcExecutor;
+use gevulot::Either;
 use gevulot_fil::codec::decode_from;
 use gevulot_fil::C2Input;
 use gevulot_fil::SecretKey;
@@ -21,7 +24,6 @@ use gevulot_node::types::Hash;
 use panic_hook::install_panic_hook;
 use processor::c2::C2Processor;
 use processor::windowpost::WindowPoStProcessor;
-use processor::Gevulot as BaseProcessor;
 use tokio::runtime::Builder;
 use tracing::info;
 use url::Url;
@@ -32,6 +34,7 @@ use warp::Filter;
 use zeroize::Zeroizing;
 
 mod filestorage;
+mod gevulot;
 mod logging;
 mod panic_hook;
 mod processor;
@@ -50,6 +53,9 @@ struct Cli {
     /// RPC url of the Gevulot node
     #[arg(short, long, env, default_value = "http://localhost:9944")]
     rpc_url: String,
+    /// Mock mode
+    #[arg(long, default_value = "false")]
+    mock: bool,
     /// Private key file path to sign Tx.
     #[clap(
         short,
@@ -142,22 +148,20 @@ pub fn main() -> Result<()> {
             prover_program,
             verifier_program,
         }) => {
-            let proc = C2Processor::new(
-                create_base_processor(&cli)?,
-                prover_program,
-                verifier_program,
-            );
+            let fs = create_fs(&cli)?;
+            let exec = create_gevulot_executor(&cli, fs.clone())?;
+
+            let proc = C2Processor::new(exec, prover_program, verifier_program, fs);
             run_consumer_with_proc(proc)
         }
         Commands::Processor(ProcessorCommands::WindowPoST {
             prover_program,
             verifier_program,
         }) => {
-            let proc = WindowPoStProcessor::new(
-                create_base_processor(&cli)?,
-                prover_program,
-                verifier_program,
-            );
+            let fs: FileStorage = create_fs(&cli)?;
+            let exec = create_gevulot_executor(&cli, fs.clone())?;
+
+            let proc = WindowPoStProcessor::new(exec, prover_program, verifier_program, fs);
             run_consumer_with_proc(proc)
         }
         Commands::Fileserver { listen } => {
@@ -193,11 +197,9 @@ pub fn main() -> Result<()> {
             verifier_program,
             ref input_file,
         }) => {
-            let proc = C2Processor::new(
-                create_base_processor(&cli)?,
-                prover_program,
-                verifier_program,
-            );
+            let fs = create_fs(&cli)?;
+            let exec = create_gevulot_executor(&cli, fs.clone())?;
+            let proc = C2Processor::new(exec, prover_program, verifier_program, fs);
             let f = File::open(&input_file).context("open the c2 input file")?;
             let c2_in: C2Input = decode_from(f).context("decode the c2 input data")?;
             let proof = proc.exec(c2_in)?;
@@ -210,11 +212,10 @@ pub fn main() -> Result<()> {
             verifier_program,
             ref input_file,
         }) => {
-            let proc: WindowPoStProcessor = WindowPoStProcessor::new(
-                create_base_processor(&cli)?,
-                prover_program,
-                verifier_program,
-            );
+            let fs: FileStorage = create_fs(&cli)?;
+            let exec = create_gevulot_executor(&cli, fs.clone())?;
+
+            let proc = WindowPoStProcessor::new(exec, prover_program, verifier_program, fs);
             let f = File::open(&input_file).context("open the c2 input file")?;
             let wdp2_in: WindowPoStPhase2Input =
                 decode_from(f).context("decode the c2 input data")?;
@@ -225,20 +226,29 @@ pub fn main() -> Result<()> {
     }
 }
 
-fn create_base_processor(cli: &Cli) -> Result<BaseProcessor> {
-    let rpc_client = Arc::new(RpcClient::new(&cli.rpc_url));
-    let key_array = fs::read(&cli.keyfile)
-        .with_context(|| format!("read key file: {}", cli.keyfile.display()))?;
-    let sk = Zeroizing::new(SecretKey::parse_slice(&key_array).context("parse secret key")?);
-
+fn create_fs(cli: &Cli) -> Result<FileStorage> {
     let fs_path = cli.fileserver_path.display().to_string();
     let fs_op = filestorage::init_operator(&filestorage::StorageParams::Fs { root: fs_path })
         .context("init operator")?;
-    Ok(BaseProcessor::new(
-        rpc_client,
-        sk,
-        FileStorage::new(fs_op.blocking(), cli.fileserver_base_url.clone()),
+    Ok(FileStorage::new(
+        fs_op.blocking(),
+        cli.fileserver_base_url.clone(),
     ))
+}
+
+fn create_gevulot_executor(
+    cli: &Cli,
+    fs: FileStorage,
+) -> Result<Either<GevulotRpcExecutor, GevulotLocalExecutor>> {
+    Ok(if cli.mock {
+        Either::Right(GevulotLocalExecutor::new(fs))
+    } else {
+        let rpc_client = Arc::new(RpcClient::new(&cli.rpc_url));
+        let key_array = fs::read(&cli.keyfile)
+            .with_context(|| format!("read key file: {}", cli.keyfile.display()))?;
+        let sk = Zeroizing::new(SecretKey::parse_slice(&key_array).context("parse secret key")?);
+        Either::Left(GevulotRpcExecutor::new(rpc_client, sk, fs))
+    })
 }
 
 fn parse_hash(data: &str) -> Result<Hash> {
